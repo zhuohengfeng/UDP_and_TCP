@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activitys.ServiceActivity">
+    tools:context=".activitys.DeviceSearchActivity">
 
     <TextView
         android:background="#ADADAD"
@@ -13,12 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:text="搜索状态" />
+        android:text="正在上报状态中...." />
 
-    <ListView
-        android:id="@+id/list_devices"
-        android:layout_below="@+id/tv_status"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerInParent="true" />
+
 </RelativeLayout>

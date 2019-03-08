@@ -6,39 +6,32 @@ import com.rokid.udpbroadcast.view.DeviceBean;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Vector;
 
 // 这个是跑着服务端的
 // 一直监听是否有客户端连接上
 public class TCPServer extends Thread {
 
-    ServerSocket serverSocket;
-
-    private Vector<DeviceBean> players;
-
-    private Integer numPlayerLastAssigned;
+    private ServerSocket serverSocket;
 
     private Boolean keepRunning;
     private Boolean listening;
 
-    public TCPServer(Vector<DeviceBean> players) {
-        super();
+    private ISocketCallback mCallback;
 
-        setName("TCPServer");
+    private int numPlayerLastAssigned = 0;
 
-        this.players = players;
-
-        this.numPlayerLastAssigned = 0;
-
+    public TCPServer(ISocketCallback callback) {
+        super("TCPServer");
         this.keepRunning = true;
         this.listening = false;
+        this.mCallback = callback;
+        this.numPlayerLastAssigned = 0;
     }
 
 
     @Override
     public void run() {
         try {
-            Logger.d("first line");
             SocketManager.getInstance().portServer = SocketManager.TCP_PORT;
             do {
                 try {
@@ -50,19 +43,24 @@ public class TCPServer extends Thread {
                 }
             } while (serverSocket == null || !serverSocket.isBound());
 
-            Logger.d("TCPServer Started");
+            Logger.d("[TCPClient] TCPServer Started, portServer="+SocketManager.getInstance().portServer);
 
             this.listening = true;
 
             // 服务器等待客户端的tcp连接 ---- 终于等到TCP连接上了，这里就在服务端创建一个设备名称在APP端连接
             while (keepRunning) {
                 Socket client = serverSocket.accept();
+
                 // 创建一个角色player
-                DeviceBean new_player = new DeviceBean(new TCPConnection(client), this.numPlayerLastAssigned);
+                DeviceBean new_device = new DeviceBean(new TCPConnection(client), this.numPlayerLastAssigned);
                 this.numPlayerLastAssigned++;
-                players.add(new_player);
-                Logger.d("有一个新的设备加入： new_player="+new_player);
-                DomainUtils.getInstance().updatedPlayers();
+
+                Logger.d("有一个新的设备加入： new_device="+new_device);
+
+                if (mCallback != null) {
+                    mCallback.onTCPServerAddDevice(new_device);
+                }
+
             }
         } catch (Exception e) {
             Logger.e("Exception  in running TCPServer"+e);

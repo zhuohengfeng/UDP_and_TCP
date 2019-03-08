@@ -67,12 +67,12 @@ public class TCPConnection extends Thread {
             if (keepRunning) {
                 Logger.e("CONNECTION READ NULL");
                 // 如果没有读到任何消息，则断开连接，并通知所有剩余的playui退出
-                DomainUtils.getInstance().disconnectionDetected(this);
+                SocketManager.getInstance().disconnectionDetected(this);
             }
         } catch (Exception e) {
             e.printStackTrace();
             Logger.e("CONNECTION READ EXCEPTION"+e);
-            DomainUtils.getInstance().disconnectionDetected(this);
+            SocketManager.getInstance().disconnectionDetected(this);
         }
 
     }
@@ -109,7 +109,7 @@ public class TCPConnection extends Thread {
         Bundle data = new Bundle();
         data.putString(type, content);
         msg.setData(data);
-        DomainUtils.getInstance().getHandlerDomain().sendMessage(msg);
+        //SocketManager.getInstance().getHandlerDomain().sendMessage(msg);
     }
 
     public void close() {
