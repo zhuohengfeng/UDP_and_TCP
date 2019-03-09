@@ -43,7 +43,7 @@ public class TCPServer extends Thread {
                 }
             } while (serverSocket == null || !serverSocket.isBound());
 
-            Logger.d("[TCPClient] TCPServer Started, portServer="+SocketManager.getInstance().portServer);
+            Logger.d("[TCPClient] TCPServer 服务端启动，进入监听状态 portServer="+SocketManager.getInstance().portServer);
 
             this.listening = true;
 
@@ -51,11 +51,11 @@ public class TCPServer extends Thread {
             while (keepRunning) {
                 Socket client = serverSocket.accept();
 
-                // 创建一个角色player
+                // 创建一个设备
                 DeviceBean new_device = new DeviceBean(new TCPConnection(client), this.numPlayerLastAssigned);
                 this.numPlayerLastAssigned++;
 
-                Logger.d("有一个新的设备加入： new_device="+new_device);
+                Logger.e("有一个新的设备加入： new_device="+new_device);
 
                 if (mCallback != null) {
                     mCallback.onTCPServerAddDevice(new_device);

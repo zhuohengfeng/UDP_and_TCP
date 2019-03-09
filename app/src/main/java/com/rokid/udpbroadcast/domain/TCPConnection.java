@@ -1,8 +1,5 @@
 package com.rokid.udpbroadcast.domain;
 
-import android.os.Bundle;
-import android.os.Message;
-
 import com.rokid.udpbroadcast.utils.Logger;
 
 import java.io.BufferedReader;
@@ -18,34 +15,39 @@ public class TCPConnection extends Thread {
 
     private Boolean keepRunning = false;
 
+    private String tcpIP;
+    private int tcpPort;
+
     // 客户端连接
     public TCPConnection(final String ip, final int port) {
         super();
 
-        Logger.d("TCPConnection start");
-        new Thread() {
-            @Override
-            public void run() {
-                super.run();
-                try {
-                    Logger.d("TCPConnection init the socket");
-                    TCPConnection.this.socket = new Socket(ip, port);
-                    TCPConnection.this.keepRunning = true;
+        Logger.d("TCPConnection start: ip="+ip+", port="+port);
+        this.tcpIP = ip;
+        this.tcpPort = port;
 
-                } catch (IOException e) {
-                    // TODO: error when establishing a connection?
-                    e.printStackTrace();
-                }
-            }
-        };
 
-        Logger.d("TCPConnection end");
+//        new Thread() {
+//            @Override
+//            public void run() {
+//                super.run();
+//                try {
+//                    Logger.d("TCPConnection init the socket");
+//                    TCPConnection.this.socket = new Socket(ip, port);
+//                    TCPConnection.this.keepRunning = true;
+//
+//                } catch (IOException e) {
+//                    // TODO: error when establishing a connection?
+//                    e.printStackTrace();
+//                }
+//            }
+//        }.start();
+
     }
 
     // 这个是服务端保存的
     public TCPConnection(Socket socket) {
         this.socket = socket;
-
         this.keepRunning = true;
     }
 
@@ -54,13 +56,17 @@ public class TCPConnection extends Thread {
         super.run();
 
         try {
+            this.socket = new Socket(tcpIP, tcpPort);
+            this.keepRunning = true;
+
             String received="";
             // 注意这里in()也是阻塞式的，所以不会一直循环跑，而是等待发送过来的命令消息
+            Logger.d("TCPConnection 进入监听状态 socket="+socket);
             while (keepRunning && socket != null && !socket.isClosed()) {
                 // 通知UI 更新
                 received = in();
                 Logger.d("TCPConnection--received ="+received);
-                sendMsg("MSG", received);
+                //sendMsg("MSG", received);
             }
             Logger.d("TCPConnection thread run exit---received="+received);
             // 这里是一个客户端断开后，服务端这边会in()为空
@@ -103,14 +109,14 @@ public class TCPConnection extends Thread {
     }
 
     // 如果收到消息，则通过handler来通知domain
-    private void sendMsg(String type, String content) {
-        Logger.e("sendMsg type："+type+", content="+content);
-        Message msg = new Message();
-        Bundle data = new Bundle();
-        data.putString(type, content);
-        msg.setData(data);
-        //SocketManager.getInstance().getHandlerDomain().sendMessage(msg);
-    }
+//    private void sendMsg(String type, String content) {
+//        Logger.e("sendMsg type："+type+", content="+content);
+//        Message msg = new Message();
+//        Bundle data = new Bundle();
+//        data.putString(type, content);
+//        msg.setData(data);
+//        //SocketManager.getInstance().getHandlerDomain().sendMessage(msg);
+//    }
 
     public void close() {
         Logger.d("Closing TCPConnection");

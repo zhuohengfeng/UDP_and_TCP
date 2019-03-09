@@ -54,14 +54,11 @@ public class ServiceActivity extends AppCompatActivity {
         mDeviceListView = findViewById(R.id.list_devices);
         mDeviceListAdapter = new DeviceListAdapter(this);
         mDeviceListView.setAdapter(mDeviceListAdapter);
-
-        SocketManager.getInstance().init(this, SocketManager.MODE_SERVER);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        SocketManager.getInstance().exit();
     }
 
 
@@ -76,7 +73,7 @@ public class ServiceActivity extends AppCompatActivity {
 
         try {
             // 服务端启动UDP线程
-            SocketManager.getInstance().serverUDPStart();
+            SocketManager.getInstance().udpServerStart(this, SocketManager.MODE_SERVER);
             // 服务端启动TCP线程
             SocketManager.getInstance().serverTCPStart();
         } catch (Exception e) {
@@ -91,7 +88,7 @@ public class ServiceActivity extends AppCompatActivity {
         super.onStop();
         Logger.d("ServiceActivity: [Service] stop the TCP & UDP server ----");
         SocketManager.getInstance().serverTCPStop();
-        SocketManager.getInstance().allUDPStop();
+        SocketManager.getInstance().udpServerStop();
     }
 
 

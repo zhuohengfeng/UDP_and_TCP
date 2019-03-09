@@ -1,6 +1,7 @@
 package com.rokid.udpbroadcast.domain;
 
 import android.content.Context;
+import android.net.wifi.WifiManager;
 
 import com.rokid.udpbroadcast.utils.Logger;
 import com.rokid.udpbroadcast.view.DeviceBean;
@@ -18,12 +19,14 @@ public class SocketManager implements ISocketCallback{
 
     private Context mContext;
 
+    private WifiManager.MulticastLock mMulticastLock;
+
     // 单实例
     private static SocketManager mInstance = null;
     // 组播的IP地址
-    public final static String UDP_IP = "239.9.9.1";
+    public final static String UDP_IP = "228.5.6.7";//"239.9.9.1";
     // 组播的Port
-    public final static Integer UDP_PORT = 5761;//17375;
+    public final static Integer UDP_PORT = 6789; //5761;//17375;
     // tcp的Port
     public final static Integer TCP_PORT = 6761;//17375;
 
@@ -54,23 +57,23 @@ public class SocketManager implements ISocketCallback{
         return mInstance;
     }
 
-
-    public void init(Context context, int mode) {
-        this.mode = mode;
-        if (mode != MODE_SERVER && mode != MODE_CLIENT) {
-            throw new InvalidParameterException();
-        }
-        mContext = context;
-    }
-
-    public void exit() {
-
-    }
+//
+//    public void init(Context context, int mode) {
+//        this.mode = mode;
+//        if (mode != MODE_SERVER && mode != MODE_CLIENT) {
+//            throw new InvalidParameterException();
+//        }
+//        mContext = context;
+////    }
+//
+//    public void exit() {
+//
+//    }
 
 
     @Override
     public void onUDPClientPing(InetAddress clientIp) {
-        Logger.d("service收到登录请求，发送服务端TCP信息给client , clientIp="+clientIp);
+        Logger.d("service收到登录请求，发送服务端TCP信息给client , clientIp="+clientIp.getHostAddress());
         threadUDPServer.sendMessage(clientIp, Message.MSG_UDP_S2C_HOST_INFO+"|"+this.portServer);
     }
 
@@ -97,29 +100,39 @@ public class SocketManager implements ISocketCallback{
     /************************************
      *          UDP 相关操作
      ************************************/
-    public void serverUDPStart() {
-        // 创建server端的UDP线程
-        Logger.d("[server] UDP Start running--->");
-        allUDPStop();
+    public void udpServerStart(Context context, int mode) {
+        this.mode = mode;
+        if (mode != MODE_SERVER && mode != MODE_CLIENT) {
+            throw new InvalidParameterException();
+        }
+        this.mContext = context;
 
-        this.threadUDPServer = new UDPServer(this);
+        WifiManager wifiManager=(WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
+        mMulticastLock = wifiManager.createMulticastLock("multicast.test");
+        mMulticastLock.acquire();
+
+        // 创建server端的UDP线程
+        Logger.e("[server] UDP Start running--->multicastLock.isHeld="+mMulticastLock.isHeld());
+        udpServerStop();
+
+        this.threadUDPServer = new UDPServer(this, mode);
         this.threadUDPServer.start();
     }
 
     // 对于client端来说，启动客户端后，会发送一个PING请求信息
-    public void clientUDPFind() {
-        Logger.d("[client] UDP Start running--->");
-        allUDPStop();
-
-        this.threadUDPServer = new UDPServer(this);
-        this.threadUDPServer.start();
-
-        Logger.d("[client] client Sent PING--->");
-        this.threadUDPServer.sendBroadcast(Message.MEG_UDP_C2S_PING);
-    }
+//    public void clientUDPFind() {
+//        Logger.d("[client] UDP Start running--->");
+//        udpServerStop();
+//
+//        this.threadUDPServer = new UDPServer(this, mode);
+//        this.threadUDPServer.start();
+//
+//        Logger.d("[client] client Sent PING--->");
+//        this.threadUDPServer.sendBroadcast(Message.MEG_UDP_C2S_PING);
+//    }
 
     // 对于server & client 都是停止UDP服务, close之后一直等待线程 not alive!
-    public void allUDPStop() {
+    public void udpServerStop() {
         if (this.threadUDPServer != null && this.threadUDPServer.isAlive()) {
             this.threadUDPServer.close();
             while (this.threadUDPServer.isAlive()) {
@@ -127,6 +140,15 @@ public class SocketManager implements ISocketCallback{
             }
         }
         this.threadUDPServer = null;
+
+        if (mMulticastLock != null) {
+            try {
+                mMulticastLock.release();
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         Logger.d("All UPD Closed!!!!");
     }
 

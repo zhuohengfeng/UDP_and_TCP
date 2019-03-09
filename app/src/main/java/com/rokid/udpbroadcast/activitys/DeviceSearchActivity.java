@@ -89,15 +89,11 @@ public class DeviceSearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_device_search);
 
         mTvStatus = findViewById(R.id.tv_status);
-
-        SocketManager.getInstance().init(this, SocketManager.MODE_CLIENT);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        SocketManager.getInstance().exit();
     }
 
 
@@ -106,7 +102,7 @@ public class DeviceSearchActivity extends AppCompatActivity {
         super.onStart();
 
         // 通过UDP来搜索游戏
-        SocketManager.getInstance().clientUDPFind();
+        SocketManager.getInstance().udpServerStart(this, SocketManager.MODE_CLIENT);
         // CtrlDomain.getInstance().createCleanBoard();
     }
 
@@ -114,7 +110,7 @@ public class DeviceSearchActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         // 停止UDP搜索游戏
-        SocketManager.getInstance().allUDPStop(); // TODO， 这个应该可以提前关闭
+        SocketManager.getInstance().udpServerStop(); // TODO， 这个应该可以提前关闭
         SocketManager.getInstance().serverTCPDisconnect();
     }
 
